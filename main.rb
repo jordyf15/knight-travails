@@ -15,12 +15,10 @@ class Knight
       end
     end
   end
-
-  
 end
 
 class ChessBoard
-  attr_reader :knight
+  attr_reader :knight, :board
   def initialize
     @board = [
       ['8a', '8b', '8c', '8d', '8e', '8f', '8g', '8h'],
@@ -34,11 +32,49 @@ class ChessBoard
     ]
     @knight = Knight.new @board
   end
+
+  def knight_moves start, goal
+    queue = [start]
+    distances = Array.new(8) { Array.new(8, -1)}
+    paths = Array.new(8) { Array.new(8)}
+    vertices = Array.new(8) { Array.new(8)}
+    paths[start[0]][start[1]] = start
+
+    until queue.empty?
+      current = queue[0]
+      @knight.move_graph[current[0]][current[1]].select {|move| distances[move[0]][move[1]] == -1}
+        .each do |move|
+          paths[move[0]][move[1]] = current
+          queue.push move
+        end
+        parent = paths[current[0]][current[1]]
+        vertices[current[0]][current[1]] = current
+        distances[current[0]][current[1]] = distances[parent[0]][parent[1]]+1
+        queue.shift
+    end
+
+    current = goal
+    history = []
+    until current == start
+      history.unshift current
+      row = vertices.rindex {|vertix| vertix.include? current}
+    
+      col = vertices[row].rindex {|vertix| vertix == current}
+      current = paths[row][col]
+    end
+    history.unshift start
+    row = vertices.rindex {|vertix| vertix.include? goal}
+    col = vertices[row].rindex {|vertix| vertix == goal}
+    movement = distances[row][col]
+
+    puts "You made it in #{movement} moves! Here's your path: "
+    history.each {|steps| print "#{steps} #{@board[steps[0]][steps[1]]}\n"}
+  end
 end
 
 def main 
   chessboard = ChessBoard.new
-  p chessboard.knight.move_graph[7][7]
+  chessboard.knight_moves [3,3], [4,3]
 end
 
 main
